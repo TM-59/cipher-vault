@@ -23,5 +23,5 @@ SQLite integration in M3 and browser smoke in M4. These omissions are not passes
 - [Import Linter layers](https://import-linter.readthedocs.io/en/stable/contract_types/layers/)
 - [uv locked environments](https://docs.astral.sh/uv/concepts/projects/sync/)
 
-References checked 2026-11-06. Vocabulary was drafted locally and reviewed against
-the explicit game constraints; the final definitions and examples were checked by hand.
+References checked 2026-11-06. Vocabulary and examples were reviewed against the
+explicit game constraints. No unverified model output is included.
