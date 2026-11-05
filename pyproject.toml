@@ -1,0 +1,47 @@
+[project]
+name = "cipher-vault"
+version = "0.1.0"
+description = "Codebreaking puzzle architecture with a FastAPI adapter"
+requires-python = ">=3.14"
+dependencies = ["fastapi", "pydantic", "uvicorn"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest", "httpx2", "ruff", "mypy", "import-linter"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+mypy_path = "src"
+files = ["src", "tests", "scripts"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.importlinter]
+root_package = "cipher_vault"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Adapters point inward and remain independent"
+type = "layers"
+containers = ["cipher_vault"]
+layers = ["composition", "presentation | infrastructure", "application", "domain"]
+exhaustive = true
+
+[[tool.importlinter.contracts]]
+name = "Core does not depend on web frameworks or validation adapters"
+type = "forbidden"
+source_modules = ["cipher_vault.domain", "cipher_vault.application"]
+forbidden_modules = ["fastapi", "pydantic", "uvicorn"]
