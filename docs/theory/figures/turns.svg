@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="sans-serif" font-size="12">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="70" y="26" font-size="16" font-weight="bold" fill="#222">First-possible-code strategy: guesses needed (last bar: not found)</text>
+<line x1="70" y1="338.0" x2="700" y2="338.0" stroke="#e3e3e3"/>
+<text x="62" y="342.0" text-anchor="end" fill="#444">0</text>
+<line x1="70" y1="279.2" x2="700" y2="279.2" stroke="#e3e3e3"/>
+<text x="62" y="283.2" text-anchor="end" fill="#444">132</text>
+<line x1="70" y1="220.4" x2="700" y2="220.4" stroke="#e3e3e3"/>
+<text x="62" y="224.4" text-anchor="end" fill="#444">265</text>
+<line x1="70" y1="161.6" x2="700" y2="161.6" stroke="#e3e3e3"/>
+<text x="62" y="165.6" text-anchor="end" fill="#444">397</text>
+<line x1="70" y1="102.8" x2="700" y2="102.8" stroke="#e3e3e3"/>
+<text x="62" y="106.8" text-anchor="end" fill="#444">530</text>
+<line x1="70" y1="44.0" x2="700" y2="44.0" stroke="#e3e3e3"/>
+<text x="62" y="48.0" text-anchor="end" fill="#444">662</text>
+<rect x="80.5" y="337.6" width="49.0" height="0.4" fill="#1f77b4"/>
+<text x="105.0" y="333.6" text-anchor="middle" fill="#222">1</text>
+<text x="105.0" y="354" text-anchor="middle" fill="#444">1</text>
+<rect x="150.5" y="336.2" width="49.0" height="1.8" fill="#1f77b4"/>
+<text x="175.0" y="332.2" text-anchor="middle" fill="#222">4</text>
+<text x="175.0" y="354" text-anchor="middle" fill="#444">2</text>
+<rect x="220.5" y="326.9" width="49.0" height="11.1" fill="#1f77b4"/>
+<text x="245.0" y="322.9" text-anchor="middle" fill="#222">25</text>
+<text x="245.0" y="354" text-anchor="middle" fill="#444">3</text>
+<rect x="290.5" y="290.1" width="49.0" height="47.9" fill="#1f77b4"/>
+<text x="315.0" y="286.1" text-anchor="middle" fill="#222">108</text>
+<text x="315.0" y="354" text-anchor="middle" fill="#444">4</text>
+<rect x="360.5" y="202.6" width="49.0" height="135.4" fill="#1f77b4"/>
+<text x="385.0" y="198.6" text-anchor="middle" fill="#222">305</text>
+<text x="385.0" y="354" text-anchor="middle" fill="#444">5</text>
+<rect x="430.5" y="70.7" width="49.0" height="267.3" fill="#1f77b4"/>
+<text x="455.0" y="66.7" text-anchor="middle" fill="#222">602</text>
+<text x="455.0" y="354" text-anchor="middle" fill="#444">6</text>
+<rect x="500.5" y="251.0" width="49.0" height="87.0" fill="#1f77b4"/>
+<text x="525.0" y="247.0" text-anchor="middle" fill="#222">196</text>
+<text x="525.0" y="354" text-anchor="middle" fill="#444">7</text>
+<rect x="570.5" y="316.2" width="49.0" height="21.8" fill="#1f77b4"/>
+<text x="595.0" y="312.2" text-anchor="middle" fill="#222">49</text>
+<text x="595.0" y="354" text-anchor="middle" fill="#444">8</text>
+<rect x="640.5" y="335.3" width="49.0" height="2.7" fill="#1f77b4"/>
+<text x="665.0" y="331.3" text-anchor="middle" fill="#222">6</text>
+<text x="665.0" y="354" text-anchor="middle" fill="#444">lost</text>
+<rect x="70" y="44" width="630" height="294" fill="none" stroke="#888"/>
+<text x="385" y="388" text-anchor="middle" fill="#222">guesses</text>
+<text transform="translate(16 191) rotate(-90)" text-anchor="middle" fill="#222">secrets</text>
+</svg>

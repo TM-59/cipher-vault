@@ -7,6 +7,11 @@ The rules: find a four-digit code in eight guesses. Digits 0-5 may repeat;
 feedback reports exact matches and digit-only matches. See [the domain design](docs/domain.md)
 and [verification scope](docs/requirements.md).
 
+**Theory handbook**: [docs/theory/](docs/theory/README.md) — 8 statements (the language, the code value,
+scoring, the possible feedbacks, why eight guesses are enough, the round, one guess step by step, the
+dependency rule), each with its rule, assumptions, derivation, code, tests and a figure. `make theory-figs`
+regenerates the figures and the measured values; `make theory-check` checks the coverage table.
+
 ## Run the scaffold
 
 Install Python 3.14 and [uv](https://docs.astral.sh/uv/), then:
