@@ -9,3 +9,6 @@
 - Use one issue and one small pull request per purpose. Do not add generated author signatures.
 - CI runs lint, typing, architecture and unit checks on pull requests only.
 - No containers, external artwork, external model services or deployment in this milestone.
+- Keep `docs/theory` in step with the code: a new rule gets a page section, a figure and a table
+  row in the same pull request; `make theory-figs` and `make theory-check` must pass, and the
+  README's statement count (8) must match the table.
