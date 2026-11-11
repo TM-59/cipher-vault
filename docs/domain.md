@@ -1,7 +1,7 @@
 # Codebreaking context
 
 This is a single-player deduction game: infer a hidden code from limited guesses.
-The design below is the M2 contract, not implemented gameplay in M1.
+M2 implements the design below as a pure domain (`src/cipher_vault/domain/model.py`).
 
 | Term | Meaning and planned model |
 | --- | --- |
@@ -42,7 +42,7 @@ standard library; a test imports it with site packages disabled.
 ## Roadmap
 
 1. M1: vocabulary, empty layer packages, health endpoint and verification.
-2. M2: Code, Feedback, Round, Scoring and GuessScored, with pure domain tests.
+2. M2 (done): Code, Feedback, Round, Scoring and GuessScored, with pure domain tests.
 3. M3: start/guess/read use cases, repository port, SQLite transactions and restart tests.
 4. M4: one browser screen and API to start, guess, inspect history and restart.
 
