@@ -1,7 +1,7 @@
 # Cipher Vault
 
 A codebreaking puzzle built with Python and FastAPI, one small milestone at a time.
-M2 implements the rules as a pure domain; storage and the browser game follow later.
+M3 adds application use cases and file-backed SQLite persistence to the pure M2 domain.
 
 The rules: find a four-digit code in eight guesses. Digits 0-5 may repeat;
 feedback reports exact matches and digit-only matches. See [the domain design](docs/domain.md)
@@ -22,8 +22,10 @@ make check
 make serve
 ```
 
-`GET http://localhost:8000/health` returns `{"status":"ok"}`. The server is local.
-No game screen or database exists yet; M3 adds SQLite and M4 adds the browser game.
+`GET http://localhost:8000/health` returns `{"status":"ok"}`. The server is local;
+gameplay use cases are currently exposed through Python, not HTTP endpoints. SQLite
+uses `test-results/cipher-vault.sqlite3` by default; set `CIPHER_VAULT_DB_PATH` to
+choose another local database file. M4 adds the browser game.
 The rules can be tried from Python without FastAPI:
 
 ```sh
@@ -36,5 +38,6 @@ print(game.guess(Code.parse('0012')).state)
 ```
  No screenshots are claimed before a playable screen exists.
 
-`make test` runs the unit checks. Local JUnit and summary files stay under ignored
-`test-results/`. Pull requests run lint, typing, architecture and unit checks only.
+`make test` runs unit and SQLite integration checks. Local JUnit and summary files
+stay under ignored `test-results/`. Pull requests run lint, typing, architecture,
+unit and integration checks.

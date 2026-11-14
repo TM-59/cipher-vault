@@ -3,8 +3,21 @@
   "repository": "TM-59/cipher-vault",
   "entrypoints": {"test": "make test", "check": "make check"},
   "kinds": {
-    "unit": {"framework": "pytest", "requirements": ["REQ-HEALTH", "REQ-CORE", "REQ-CODE", "REQ-SCORE", "REQ-ROUND"]},
-    "integration": {"reason": "Deferred until SQLite persistence in M3."},
+    "unit": {
+      "framework": "pytest",
+      "requirements": [
+        "REQ-HEALTH",
+        "REQ-CORE",
+        "REQ-CODE",
+        "REQ-SCORE",
+        "REQ-ROUND",
+        "REQ-USECASE"
+      ]
+    },
+    "integration": {
+      "framework": "pytest",
+      "requirements": ["REQ-PERSISTENCE", "REQ-REVISION", "REQ-ATOMIC"]
+    },
     "e2e": {"reason": "Deferred until the playable screen in M4."},
     "perf": {"reason": "No gameplay or measurable performance contract in M1."},
     "mem": {"reason": "No simulation or persistence workload in M1."},

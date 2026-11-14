@@ -15,6 +15,7 @@ dev = ["pytest", "httpx2", "ruff", "mypy", "import-linter"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = ["integration: exercises persistence using a file-backed SQLite database"]
 
 [tool.mypy]
 python_version = "3.14"

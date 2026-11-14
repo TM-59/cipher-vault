@@ -89,7 +89,7 @@ flowchart TD
 
 **Code.** The two Import Linter contracts in `pyproject.toml` (`Adapters point inward and remain independent`, and the forbidden-modules contract for the core); the package `src/cipher_vault/domain/__init__.py` exports the nine names of S01.
 
-**Tests.** `make check` runs Import Linter (2 contracts kept); `test_REQ_CORE_imports_without_site_packages` in `tests/test_scaffold.py` starts Python with site packages disabled and imports the domain and the application.
+**Tests.** `make check` runs Import Linter (2 contracts kept); `test_REQ_CORE_imports_without_site_packages` in `tests/test_scaffold.py` starts Python with site packages disabled and imports the domain and application use cases.
 
 ## References
 
