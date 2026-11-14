@@ -15,11 +15,33 @@ clock = time.monotonic()
 run_id = started.strftime("%Y%m%dT%H%M%S%fZ")
 folder = Path("test-results") / run_id
 folder.mkdir(parents=True)
-junit = folder / "unit-pytest.xml"
+junit_files = {
+    "unit": folder / "unit-pytest.xml",
+    "integration": folder / "integration-pytest.xml",
+}
 mode = sys.argv[1]
 if mode not in {"test", "check"}:
     raise SystemExit("expected test or check")
-commands = [[sys.executable, "-m", "pytest", "-q", f"--junitxml={junit}"]]
+commands = [
+    [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-m",
+        "not integration",
+        f"--junitxml={junit_files['unit']}",
+    ],
+    [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-m",
+        "integration",
+        f"--junitxml={junit_files['integration']}",
+    ],
+]
 if mode == "check":
     commands += [
         ["ruff", "check", "."],
@@ -39,17 +61,40 @@ for command in commands:
     except subprocess.TimeoutExpired, OSError:
         results.append(124)
     durations.append(round(time.monotonic() - command_started, 3))
-counts = dict(tests=0, failures=0, errors=0, skipped=0)
-if junit.exists():
-    for case in ET.parse(junit).iter("testcase"):
-        counts["tests"] += 1
-        for node, key in [("failure", "failures"), ("error", "errors"), ("skipped", "skipped")]:
-            counts[key] += int(case.find(node) is not None)
-status = "pass" if not any(results) and counts["tests"] else "fail"
+
+
+def read_counts(junit: Path) -> dict[str, int]:
+    counts = dict(tests=0, failures=0, errors=0, skipped=0)
+    if junit.exists():
+        for case in ET.parse(junit).iter("testcase"):
+            counts["tests"] += 1
+            for node, key in [
+                ("failure", "failures"),
+                ("error", "errors"),
+                ("skipped", "skipped"),
+            ]:
+                counts[key] += int(case.find(node) is not None)
+    return counts
+
+
+suite_counts = {kind: read_counts(junit) for kind, junit in junit_files.items()}
+counts = {
+    key: sum(suite[key] for suite in suite_counts.values())
+    for key in ("tests", "failures", "errors", "skipped")
+}
 git = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
 dirty = subprocess.run(
     ["git", "status", "--porcelain"], capture_output=True, text=True, check=True
 ).stdout
+status = (
+    "pass"
+    if not any(results)
+    and all(suite["tests"] > 0 for suite in suite_counts.values())
+    and counts["tests"]
+    and not counts["failures"]
+    and not counts["errors"]
+    else "fail"
+)
 summary = dict(
     schema_version=1,
     run_id=run_id,
@@ -73,7 +118,7 @@ summary = dict(
         status="not_measured",
         line_percent=None,
         branch_percent=None,
-        reason="M1 scaffold; coverage measurement is deferred.",
+        reason="Coverage measurement is not part of the local M3 check.",
     ),
     metrics=[
         dict(
@@ -85,20 +130,34 @@ summary = dict(
             comparison="eq",
             reason="check timed out or failed to start" if code == 124 else None,
         )
-        for index, code in enumerate(results[1:], 1)
+        for index, code in enumerate(results[2:], 1)
     ],
     suites=[
         dict(
-            kind="unit",
+            kind=kind,
             framework="pytest",
-            command=commands[0],
-            status="pass" if results[0] == 0 and counts["tests"] else "fail",
-            duration_seconds=durations[0],
-            counts=counts,
-            junit=str(junit) if junit.exists() else None,
-            requirements=["REQ-HEALTH", "REQ-CORE", "REQ-CODE", "REQ-SCORE", "REQ-ROUND"],
-            reason="unit process timed out or failed to start" if results[0] == 124 else None,
+            command=commands[index],
+            status=(
+                "pass"
+                if results[index] == 0
+                and suite_counts[kind]["tests"]
+                and not suite_counts[kind]["failures"]
+                and not suite_counts[kind]["errors"]
+                else "fail"
+            ),
+            duration_seconds=durations[index],
+            counts=suite_counts[kind],
+            junit=str(junit_files[kind]) if junit_files[kind].exists() else None,
+            requirements=(
+                ["REQ-HEALTH", "REQ-CORE", "REQ-CODE", "REQ-SCORE", "REQ-ROUND"]
+                if kind == "unit"
+                else ["REQ-USECASE", "REQ-PERSISTENCE", "REQ-REVISION", "REQ-ATOMIC"]
+            ),
+            reason=(
+                f"{kind} process timed out or failed to start" if results[index] == 124 else None
+            ),
         )
+        for index, kind in enumerate(junit_files)
     ],
 )
 text = json.dumps(summary, indent=2) + "\n"

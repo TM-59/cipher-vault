@@ -15,7 +15,12 @@ def test_REQ_HEALTH_returns_typed_response() -> None:
 
 def test_REQ_CORE_imports_without_site_packages() -> None:
     subprocess.run(
-        [sys.executable, "-S", "-c", "import cipher_vault.domain, cipher_vault.application"],
+        [
+            sys.executable,
+            "-S",
+            "-c",
+            "import cipher_vault.domain, cipher_vault.application.use_cases",
+        ],
         env={"PYTHONPATH": "src"},
         check=True,
         timeout=10,

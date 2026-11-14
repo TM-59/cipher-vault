@@ -1,7 +1,7 @@
-# Requirements and verification (M1 and M2)
+# Requirements and verification
 
 - REQ-HEALTH: GET /health returns status ok through the FastAPI/Pydantic adapter.
-- REQ-CORE: domain and application import with third-party packages disabled.
+- REQ-CORE: domain and application use cases import with third-party packages disabled.
 - REQ-LAYERS: imports point inward, adapters remain independent, core excludes web libraries.
   Verified by `lint-imports`; intentionally forbidden imports must fail.
 
@@ -12,9 +12,9 @@ external network, credentials, notifications or deployed resources.
 JUnit and a summary are written to ignored `test-results/<run>/`, with the latest
 summary also at `test-results/summary.json`. Failure/timeout results are retained.
 
-Benchmarks, integration, browser, visual, infrastructure and trace tests are not
-applicable before a screen and storage exist. Domain tests arrived in M2 (below),
-SQLite integration in M3 and browser smoke in M4. These omissions are not passes.
+Benchmarks, browser, visual, infrastructure and trace tests are deferred until
+their respective gameplay, screen or deployment contracts exist. Domain tests
+arrived in M2, SQLite integration in M3 and browser smoke remains for M4.
 
 ## M2: the pure domain
 
@@ -29,6 +29,18 @@ Standard library only; see `tests/test_domain.py`.
   incorrect eighth exhausts; terminal rounds and invalid input change nothing; the
   GuessScored event carries the round identity, turn, guess, feedback and state, never
   the secret.
+
+## M3: application and SQLite
+
+- REQ-USECASE: start, guess and read use cases depend on a repository port; identity
+  and code generation can be injected. Read results are DTOs that hide the secret
+  while the round is active and reveal it only after it ends.
+- REQ-PERSISTENCE: rounds and ordered guess history restore after reopening the
+  SQLite repository; unknown rounds are reported explicitly.
+- REQ-REVISION: a guess based on an outdated revision is rejected without replacing
+  or appending to the current round.
+- REQ-ATOMIC: state revision and guess event persist in one transaction; failed
+  event insertion rolls back the state change.
 
 ## References
 
