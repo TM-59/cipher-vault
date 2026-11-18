@@ -17,7 +17,6 @@ jobs:
         with:
           python-version: '3.14'
       - run: make sync
-      - run: uv run --locked ruff check . && uv run --locked ruff format --check .
-      - run: uv run --locked mypy
+      - run: make check-style
       - run: PYTHONPATH=src uv run --locked lint-imports
       - run: uv run --locked pytest -q
