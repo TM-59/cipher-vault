@@ -339,7 +339,7 @@ def main() -> None:
 
     # S08: the event never carries the secret
     scored = Round("r", Code.parse("0012")).guess(Code.parse("0203"))
-    fields = [name for name in type(scored).__dataclass_fields__]
+    fields = list(type(scored).__dataclass_fields__)
     value(
         "event-fields",
         "fields of GuessScored (round_id, turn, guess, feedback, state: 5)",

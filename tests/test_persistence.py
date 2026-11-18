@@ -1,5 +1,5 @@
 import sqlite3
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -7,6 +7,9 @@ from cipher_vault.application.use_cases import RoundNotFound
 from cipher_vault.composition import build_round_use_cases
 from cipher_vault.domain import Code, Round, RoundState
 from cipher_vault.infrastructure.repository import SQLiteRoundRepository
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 pytestmark = pytest.mark.integration
 

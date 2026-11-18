@@ -64,7 +64,7 @@ for command in commands:
 
 
 def read_counts(junit: Path) -> dict[str, int]:
-    counts = dict(tests=0, failures=0, errors=0, skipped=0)
+    counts = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
     if junit.exists():
         for case in ET.parse(junit).iter("testcase"):
             counts["tests"] += 1
@@ -95,49 +95,49 @@ status = (
     and not counts["errors"]
     else "fail"
 )
-summary = dict(
-    schema_version=1,
-    run_id=run_id,
-    repository="TM-59/cipher-vault",
-    commit=git.stdout.strip(),
-    dirty=bool(dirty),
-    started_at=started.isoformat(),
-    finished_at=datetime.now(UTC).isoformat(),
-    duration_seconds=round(time.monotonic() - clock, 3),
-    status=status,
-    exit_code=0 if status == "pass" else 1,
-    environment=dict(
-        os=platform.system(),
-        architecture=platform.machine(),
-        tools={"python": platform.python_version()},
-        jobs=1,
-        seed=None,
-    ),
-    counts=counts,
-    coverage=dict(
-        status="not_measured",
-        line_percent=None,
-        branch_percent=None,
-        reason="Coverage measurement is not part of the local M3 check.",
-    ),
-    metrics=[
-        dict(
-            name=f"check_{index}_exit",
-            status="pass" if code == 0 else "fail",
-            value=code,
-            unit="exit_code",
-            threshold=0,
-            comparison="eq",
-            reason="check timed out or failed to start" if code == 124 else None,
-        )
+summary = {
+    "schema_version": 1,
+    "run_id": run_id,
+    "repository": "TM-59/cipher-vault",
+    "commit": git.stdout.strip(),
+    "dirty": bool(dirty),
+    "started_at": started.isoformat(),
+    "finished_at": datetime.now(UTC).isoformat(),
+    "duration_seconds": round(time.monotonic() - clock, 3),
+    "status": status,
+    "exit_code": 0 if status == "pass" else 1,
+    "environment": {
+        "os": platform.system(),
+        "architecture": platform.machine(),
+        "tools": {"python": platform.python_version()},
+        "jobs": 1,
+        "seed": None,
+    },
+    "counts": counts,
+    "coverage": {
+        "status": "not_measured",
+        "line_percent": None,
+        "branch_percent": None,
+        "reason": "Coverage measurement is not part of the local M3 check.",
+    },
+    "metrics": [
+        {
+            "name": f"check_{index}_exit",
+            "status": "pass" if code == 0 else "fail",
+            "value": code,
+            "unit": "exit_code",
+            "threshold": 0,
+            "comparison": "eq",
+            "reason": "check timed out or failed to start" if code == 124 else None,
+        }
         for index, code in enumerate(results[2:], 1)
     ],
-    suites=[
-        dict(
-            kind=kind,
-            framework="pytest",
-            command=commands[index],
-            status=(
+    "suites": [
+        {
+            "kind": kind,
+            "framework": "pytest",
+            "command": commands[index],
+            "status": (
                 "pass"
                 if results[index] == 0
                 and suite_counts[kind]["tests"]
@@ -145,21 +145,21 @@ summary = dict(
                 and not suite_counts[kind]["errors"]
                 else "fail"
             ),
-            duration_seconds=durations[index],
-            counts=suite_counts[kind],
-            junit=str(junit_files[kind]) if junit_files[kind].exists() else None,
-            requirements=(
+            "duration_seconds": durations[index],
+            "counts": suite_counts[kind],
+            "junit": str(junit_files[kind]) if junit_files[kind].exists() else None,
+            "requirements": (
                 ["REQ-HEALTH", "REQ-CORE", "REQ-CODE", "REQ-SCORE", "REQ-ROUND"]
                 if kind == "unit"
                 else ["REQ-USECASE", "REQ-PERSISTENCE", "REQ-REVISION", "REQ-ATOMIC"]
             ),
-            reason=(
+            "reason": (
                 f"{kind} process timed out or failed to start" if results[index] == 124 else None
             ),
-        )
+        }
         for index, kind in enumerate(junit_files)
     ],
-)
+}
 text = json.dumps(summary, indent=2) + "\n"
 (folder / "summary.json").write_text(text)
 Path("test-results/summary.json").write_text(text)

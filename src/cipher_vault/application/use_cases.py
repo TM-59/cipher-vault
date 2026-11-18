@@ -1,15 +1,19 @@
 import secrets
-from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from cipher_vault.application.ports import RoundRepository
 from cipher_vault.domain import (
     Code,
     GuessScored,
     Round,
     RoundState,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from cipher_vault.application.ports import RoundRepository
 
 
 class RoundNotFound(LookupError):

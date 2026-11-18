@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from cipher_vault.domain import GuessScored, Round
+if TYPE_CHECKING:
+    from cipher_vault.domain import GuessScored, Round
 
 
 @dataclass(frozen=True, slots=True)

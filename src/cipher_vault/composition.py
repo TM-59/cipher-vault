@@ -1,14 +1,18 @@
 import os
-from collections.abc import Callable
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 
-from cipher_vault.application.ports import RoundRepository
 from cipher_vault.application.use_cases import GuessRound, ReadRound, StartRound
-from cipher_vault.domain import Code
 from cipher_vault.infrastructure.repository import SQLiteRoundRepository
 from cipher_vault.presentation.http import router
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from cipher_vault.application.ports import RoundRepository
+    from cipher_vault.domain import Code
 
 
 class RoundUseCases:
