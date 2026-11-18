@@ -30,7 +30,7 @@ The last column is the relative error; where the theory column is 0 it is the ab
 | `minimax-mean` | its mean number of guesses | 4.4969136 | 0 | 4.50e+00 |
 | `round-eighth-wins` | state after a correct eighth guess (1 = won) | 1 | 1 | 0.00e+00 |
 | `round-eighth-exhausts` | state after an incorrect eighth guess (1 = exhausted) | 1 | 1 | 0.00e+00 |
-| `round-terminal-refuses` | a ninth guess raises RoundFinished (theory 1) | 1 | 1 | 0.00e+00 |
+| `round-terminal-refuses` | a ninth guess raises RoundFinishedError (theory 1) | 1 | 1 | 0.00e+00 |
 | `round-terminal-history` | guesses recorded after that refusal (theory 8: nothing was added) | 8 | 8 | 0.00e+00 |
 | `round-invalid-free` | turns used after a guess that is not a Code (theory 0) | 0 | 0 | 0.00e+00 |
 | `event-fields` | fields of GuessScored (round_id, turn, guess, feedback, state: 5) | 5 | 5 | 0.00e+00 |

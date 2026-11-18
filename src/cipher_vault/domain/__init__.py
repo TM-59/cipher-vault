@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """Pure code, feedback and round rules: standard library only."""
 
 from cipher_vault.domain.model import (
@@ -7,7 +8,7 @@ from cipher_vault.domain.model import (
     Feedback,
     GuessScored,
     Round,
-    RoundFinished,
+    RoundFinishedError,
     RoundState,
     Scoring,
 )
@@ -19,7 +20,7 @@ __all__ = [
     "Feedback",
     "GuessScored",
     "Round",
-    "RoundFinished",
+    "RoundFinishedError",
     "RoundState",
     "Scoring",
 ]

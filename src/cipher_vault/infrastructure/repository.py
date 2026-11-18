@@ -1,11 +1,16 @@
+# Copyright 2026 TM-59
+"""SQLite adapter for the application round repository port."""
+
 import sqlite3
-from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from cipher_vault.application.ports import RoundRecord
 from cipher_vault.domain import Code, GuessScored, Round
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS rounds (
@@ -25,94 +30,104 @@ CREATE TABLE IF NOT EXISTS round_guesses (
 """
 
 
+# Error messages, named once so that every raise states which rule refused the value.
+FILE_DATABASE_REQUIRED = "SQLiteRoundRepository requires a file-backed database"
+REVISION_MISMATCH = "stored revision does not match the guess history"
+EVENT_MISMATCH = "guess event does not match the round transition"
+STORED_EVENT_MISMATCH = "stored guess event does not match the round rules"
+
+
 class SQLiteRoundRepository:
+    """Round repository on a file-backed SQLite database, with revisions."""
+
     def __init__(self, path: str | Path) -> None:
+        """Open (and create if needed) the database at `path`."""
         self._path = str(path)
         if self._path == ":memory:":
-            raise ValueError("SQLiteRoundRepository requires a file-backed database")
+            raise ValueError(FILE_DATABASE_REQUIRED)
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         with self._connection() as connection:
             connection.executescript(_SCHEMA)
 
     def add(self, round_: Round) -> None:
-        with self._connection() as connection:
-            with connection:
-                connection.execute("BEGIN IMMEDIATE")
-                connection.execute(
-                    "INSERT INTO rounds (round_id, secret_code) VALUES (?, ?)",
-                    (round_.round_id, str(round_.secret)),
-                )
+        """Insert the round at revision 0."""
+        with self._connection() as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                "INSERT INTO rounds (round_id, secret_code) VALUES (?, ?)",
+                (round_.round_id, str(round_.secret)),
+            )
 
     def get(self, round_id: str) -> RoundRecord | None:
-        with self._connection() as connection:
-            with connection:
-                connection.execute("BEGIN")
-                row = connection.execute(
-                    "SELECT round_id, secret_code, revision FROM rounds WHERE round_id = ?",
-                    (round_id,),
-                ).fetchone()
-                if row is None:
-                    return None
-                round_ = Round(
-                    cast(str, row["round_id"]),
-                    Code.parse(cast(str, row["secret_code"])),
-                )
-                events = tuple(
-                    self._replay(round_, guess_row)
-                    for guess_row in connection.execute(
-                        """SELECT turn, guess, exact, partial, state FROM round_guesses
+        """Return the stored round, its events and revision, or None."""
+        with self._connection() as connection, connection:
+            connection.execute("BEGIN")
+            row = connection.execute(
+                "SELECT round_id, secret_code, revision FROM rounds WHERE round_id = ?",
+                (round_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            round_ = Round(
+                cast("str", row["round_id"]),
+                Code.parse(cast("str", row["secret_code"])),
+            )
+            events = tuple(
+                self._replay(round_, guess_row)
+                for guess_row in connection.execute(
+                    """SELECT turn, guess, exact, partial, state FROM round_guesses
                            WHERE round_id = ? ORDER BY turn""",
-                        (round_id,),
-                    )
+                    (round_id,),
                 )
-                revision = cast(int, row["revision"])
-                if len(events) != revision:
-                    raise ValueError("stored revision does not match the guess history")
-                return RoundRecord(round_, events, revision)
+            )
+            revision = cast("int", row["revision"])
+            if len(events) != revision:
+                raise ValueError(REVISION_MISMATCH)
+            return RoundRecord(round_, events, revision)
 
     def save(self, round_: Round, event: GuessScored, expected_revision: int) -> bool:
+        """Append the event and bump the revision atomically if it is unchanged."""
         if (
             event.round_id != round_.round_id
             or not round_.history
             or round_.history[-1] != event
             or event.turn != expected_revision + 1
         ):
-            raise ValueError("guess event does not match the round transition")
-        with self._connection() as connection:
-            with connection:
-                connection.execute("BEGIN IMMEDIATE")
-                changed = connection.execute(
-                    """UPDATE rounds SET revision = revision + 1
+            raise ValueError(EVENT_MISMATCH)
+        with self._connection() as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            changed = connection.execute(
+                """UPDATE rounds SET revision = revision + 1
                        WHERE round_id = ? AND revision = ?""",
-                    (round_.round_id, expected_revision),
-                ).rowcount
-                if changed == 0:
-                    return False
-                connection.execute(
-                    """INSERT INTO round_guesses
+                (round_.round_id, expected_revision),
+            ).rowcount
+            if changed == 0:
+                return False
+            connection.execute(
+                """INSERT INTO round_guesses
                        (round_id, turn, guess, exact, partial, state)
                        VALUES (?, ?, ?, ?, ?, ?)""",
-                    (
-                        event.round_id,
-                        event.turn,
-                        str(event.guess),
-                        event.feedback.exact,
-                        event.feedback.partial,
-                        event.state.value,
-                    ),
-                )
+                (
+                    event.round_id,
+                    event.turn,
+                    str(event.guess),
+                    event.feedback.exact,
+                    event.feedback.partial,
+                    event.state.value,
+                ),
+            )
         return True
 
     @staticmethod
     def _replay(round_: Round, row: sqlite3.Row) -> GuessScored:
-        event = round_.guess(Code.parse(cast(str, row["guess"])))
+        event = round_.guess(Code.parse(cast("str", row["guess"])))
         if (
             event.turn != row["turn"]
             or event.feedback.exact != row["exact"]
             or event.feedback.partial != row["partial"]
             or event.state.value != row["state"]
         ):
-            raise ValueError("stored guess event does not match the round rules")
+            raise ValueError(STORED_EVENT_MISMATCH)
         return event
 
     @contextmanager

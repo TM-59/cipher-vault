@@ -64,9 +64,9 @@ classDiagram
     Round --> RoundState : derives
 ```
 
-**Code.** `src/cipher_vault/domain/model.py`: the classes `Code`, `Feedback`, `Scoring`, `GuessScored`, `Round`, `RoundState` and the exception `RoundFinished`; the constants `CODE_LENGTH` = 4 and `MAX_GUESSES` = 8.
+**Code.** `src/cipher_vault/domain/model.py`: the classes `Code`, `Feedback`, `Scoring`, `GuessScored`, `Round`, `RoundState` and the exception `RoundFinishedError`; the constants `CODE_LENGTH` = 4 and `MAX_GUESSES` = 8.
 
-**Tests.** `test_REQ_ROUND_a_correct_guess_wins_and_the_event_hides_the_secret` in `tests/test_domain.py` builds every one of these objects and compares them by value.
+**Tests.** `test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret` in `tests/test_domain.py` builds every one of these objects and compares them by value.
 
 ## S02 — A code: four digits from 0 to 5
 
@@ -88,7 +88,7 @@ flowchart TD
 
 **Code.** `Code.__post_init__` and `Code.parse` in `src/cipher_vault/domain/model.py`.
 
-**Tests.** `test_REQ_CODE_four_digits_from_zero_to_five` (8 malformed tuples), `test_REQ_CODE_text_must_be_four_plain_digits` (11 malformed texts), `test_REQ_CODE_is_an_immutable_value_with_repeats`. Measured: `codes` = 1296, `codes-no-repeat` = 360, `codes-rejected` = 5 of 5.
+**Tests.** `test_req_code_four_digits_from_zero_to_five` (8 malformed tuples), `test_req_code_text_must_be_four_plain_digits` (11 malformed texts), `test_req_code_is_an_immutable_value_with_repeats`. Measured: `codes` = 1296, `codes-no-repeat` = 360, `codes-rejected` = 5 of 5.
 
 ## S03 — Scoring: exact matches first, then the rest without reuse
 
@@ -123,7 +123,7 @@ flowchart LR
 
 **Code.** `Scoring.score` in `src/cipher_vault/domain/model.py` (two `Counter`s and their intersection).
 
-**Tests.** `test_REQ_SCORE_exact_first_then_the_rest_without_reuse` (a hand-written table of 16 pairs, with duplicates on either side) and `test_REQ_SCORE_every_pair_agrees_with_an_independent_count`. Measured over every one of the `score-pairs` = 1 679 616 pairs: the code never differs from the formula (`score-formula` = 0) and is symmetric (`score-symmetric` = 0); the example above gives `score-example-exact` = 1 and `score-example-partial` = 2.
+**Tests.** `test_req_score_exact_first_then_the_rest_without_reuse` (a hand-written table of 16 pairs, with duplicates on either side) and `test_req_score_every_pair_agrees_with_an_independent_count`. Measured over every one of the `score-pairs` = 1 679 616 pairs: the code never differs from the formula (`score-formula` = 0) and is symmetric (`score-symmetric` = 0); the example above gives `score-example-exact` = 1 and `score-example-partial` = 2.
 
 ## S04 — Which feedbacks exist
 
@@ -137,7 +137,7 @@ flowchart LR
 
 **Code.** `Feedback.__post_init__` and `Feedback.solved` in `src/cipher_vault/domain/model.py`.
 
-**Tests.** `test_REQ_CODE_feedback_values_are_possible_counts` (seven impossible pairs rejected, among them (3, 1) and (5, 0)). Measured: `feedback-kinds` = 14 different feedbacks over all pairs, `feedback-valid` = 14 pairs accepted by the class — the same set; `feedback-three-one` = 0; `feedback-solved` = 1296.
+**Tests.** `test_req_code_feedback_values_are_possible_counts` (seven impossible pairs rejected, among them (3, 1) and (5, 0)). Measured: `feedback-kinds` = 14 different feedbacks over all pairs, `feedback-valid` = 14 pairs accepted by the class — the same set; `feedback-three-one` = 0; `feedback-solved` = 1296.
 
 ## S05 — What a guess is worth, and why eight guesses are enough
 
@@ -155,7 +155,7 @@ flowchart LR
 
 **Code.** The rules that make this work are `Scoring.score` and `Round.guess` in `src/cipher_vault/domain/model.py`; the strategies themselves exist only in `scripts/theory_figs.py` (the game does not play itself).
 
-**Tests.** `test_REQ_ROUND_same_guesses_give_the_same_history` (the rules are deterministic, so a strategy is a function of the history). Measured: `split-0011` = 256, `split-0012` = 276, `split-0123` = 312, `split-0001` = 317, `split-0000` = 625; `first-fit-lost` = 6 of 1296, `first-fit-wins` = 1290, `first-fit-mean` = 5.75; `minimax-secrets` = 1296, `minimax-worst` = 6, `minimax-mean` = 4.50.
+**Tests.** `test_req_round_same_guesses_give_the_same_history` (the rules are deterministic, so a strategy is a function of the history). Measured: `split-0011` = 256, `split-0012` = 276, `split-0123` = 312, `split-0001` = 317, `split-0000` = 625; `first-fit-lost` = 6 of 1296, `first-fit-wins` = 1290, `first-fit-mean` = 5.75; `minimax-secrets` = 1296, `minimax-worst` = 6, `minimax-mean` = 4.50.
 
 ## References
 
