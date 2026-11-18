@@ -27,11 +27,18 @@ CREATE TABLE IF NOT EXISTS round_guesses (
 """
 
 
+# Error messages, named once so that every raise states which rule refused the value.
+FILE_DATABASE_REQUIRED = "SQLiteRoundRepository requires a file-backed database"
+REVISION_MISMATCH = "stored revision does not match the guess history"
+EVENT_MISMATCH = "guess event does not match the round transition"
+STORED_EVENT_MISMATCH = "stored guess event does not match the round rules"
+
+
 class SQLiteRoundRepository:
     def __init__(self, path: str | Path) -> None:
         self._path = str(path)
         if self._path == ":memory:":
-            raise ValueError("SQLiteRoundRepository requires a file-backed database")
+            raise ValueError(FILE_DATABASE_REQUIRED)
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         with self._connection() as connection:
             connection.executescript(_SCHEMA)
@@ -67,7 +74,7 @@ class SQLiteRoundRepository:
             )
             revision = cast("int", row["revision"])
             if len(events) != revision:
-                raise ValueError("stored revision does not match the guess history")
+                raise ValueError(REVISION_MISMATCH)
             return RoundRecord(round_, events, revision)
 
     def save(self, round_: Round, event: GuessScored, expected_revision: int) -> bool:
@@ -77,7 +84,7 @@ class SQLiteRoundRepository:
             or round_.history[-1] != event
             or event.turn != expected_revision + 1
         ):
-            raise ValueError("guess event does not match the round transition")
+            raise ValueError(EVENT_MISMATCH)
         with self._connection() as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             changed = connection.execute(
@@ -111,7 +118,7 @@ class SQLiteRoundRepository:
             or event.feedback.partial != row["partial"]
             or event.state.value != row["state"]
         ):
-            raise ValueError("stored guess event does not match the round rules")
+            raise ValueError(STORED_EVENT_MISMATCH)
         return event
 
     @contextmanager
