@@ -6,8 +6,8 @@ from cipher_vault.application.ports import RoundRecord, RoundRepository
 from cipher_vault.application.use_cases import (
     GuessRound,
     ReadRound,
-    RoundConflict,
-    RoundNotFound,
+    RoundConflictError,
+    RoundNotFoundError,
     RoundView,
     StartRound,
 )
@@ -38,7 +38,7 @@ class MemoryRoundRepository:
         return True
 
 
-def test_REQ_USECASE_start_guess_and_read_hide_the_secret_until_terminal() -> None:
+def test_req_usecase_start_guess_and_read_hide_the_secret_until_terminal() -> None:
     repository: RoundRepository = MemoryRoundRepository()
     start = StartRound(repository, lambda: "round-1", lambda: Code.parse("0012"))
     started = start.execute()
@@ -58,15 +58,15 @@ def test_REQ_USECASE_start_guess_and_read_hide_the_secret_until_terminal() -> No
     assert terminal.history == (first, won)
 
 
-def test_REQ_USECASE_unknown_round_and_invalid_guess_do_not_persist() -> None:
+def test_req_usecase_unknown_round_and_invalid_guess_do_not_persist() -> None:
     repository = MemoryRoundRepository()
     StartRound(repository, lambda: "round-1", lambda: Code.parse("0012")).execute()
     before = ReadRound(repository).execute("round-1")
     guess = GuessRound(repository)
 
-    with pytest.raises(RoundNotFound):
+    with pytest.raises(RoundNotFoundError):
         ReadRound(repository).execute("missing")
-    with pytest.raises(RoundNotFound):
+    with pytest.raises(RoundNotFoundError):
         guess.execute("missing", Code.parse("0000"))
     with pytest.raises(TypeError):
         guess.execute("round-1", "0012")  # type: ignore[arg-type]
@@ -74,12 +74,12 @@ def test_REQ_USECASE_unknown_round_and_invalid_guess_do_not_persist() -> None:
     assert ReadRound(repository).execute("round-1") == before
 
 
-def test_REQ_USECASE_stale_revision_is_reported_as_a_conflict() -> None:
+def test_req_usecase_stale_revision_is_reported_as_a_conflict() -> None:
     repository = MemoryRoundRepository()
     StartRound(repository, lambda: "round-1", lambda: Code.parse("0012")).execute()
     repository.reject_save = True
 
-    with pytest.raises(RoundConflict):
+    with pytest.raises(RoundConflictError):
         GuessRound(repository).execute("round-1", Code.parse("0203"))
 
     record = repository.get("round-1")

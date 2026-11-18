@@ -11,7 +11,7 @@ from cipher_vault.domain import (
     Feedback,
     GuessScored,
     Round,
-    RoundFinished,
+    RoundFinishedError,
     RoundState,
     Scoring,
 )
@@ -43,14 +43,14 @@ def state_of(game: Round) -> RoundState:
 
 
 @pytest.mark.parametrize(("secret", "guess", "exact", "partial"), SCORING)
-def test_REQ_SCORE_exact_first_then_the_rest_without_reuse(
+def test_req_score_exact_first_then_the_rest_without_reuse(
     secret: str, guess: str, exact: int, partial: int
 ) -> None:
     feedback = Scoring.score(Code.parse(secret), Code.parse(guess))
     assert (feedback.exact, feedback.partial) == (exact, partial)
 
 
-def test_REQ_SCORE_every_pair_agrees_with_an_independent_count() -> None:
+def test_req_score_every_pair_agrees_with_an_independent_count() -> None:
     codes = [Code((a, b, c, d)) for a, b, c, d in product(range(6), repeat=4)]
     assert len(codes) == 1296
     for secret in codes[::37]:  # 36 secrets against all 1296 guesses
@@ -63,7 +63,7 @@ def test_REQ_SCORE_every_pair_agrees_with_an_independent_count() -> None:
             assert feedback.solved is (secret == guess)
 
 
-def test_REQ_SCORE_only_codes_are_compared() -> None:
+def test_req_score_only_codes_are_compared() -> None:
     with pytest.raises(TypeError):
         Scoring.score(Code.parse("0000"), "0000")  # type: ignore[arg-type]
 
@@ -81,7 +81,7 @@ def test_REQ_SCORE_only_codes_are_compared() -> None:
         (True, 0, 0, 0),
     ],
 )
-def test_REQ_CODE_four_digits_from_zero_to_five(bad: object) -> None:
+def test_req_code_four_digits_from_zero_to_five(bad: object) -> None:
     with pytest.raises(ValueError):
         Code(bad)  # type: ignore[arg-type]
 
@@ -89,12 +89,12 @@ def test_REQ_CODE_four_digits_from_zero_to_five(bad: object) -> None:
 @pytest.mark.parametrize(
     "bad", ["", "012", "01234", "0126", "01a2", "0 12", "-012", "０１２３", "0.12", None, 12]
 )
-def test_REQ_CODE_text_must_be_four_plain_digits(bad: object) -> None:
+def test_req_code_text_must_be_four_plain_digits(bad: object) -> None:
     with pytest.raises(ValueError):
         Code.parse(bad)  # type: ignore[arg-type]
 
 
-def test_REQ_CODE_is_an_immutable_value_with_repeats() -> None:
+def test_req_code_is_an_immutable_value_with_repeats() -> None:
     code = Code.parse("0055")
     assert code.digits == (0, 0, 5, 5) and str(code) == "0055"
     assert code == Code((0, 0, 5, 5)) and hash(code) == hash(Code((0, 0, 5, 5)))
@@ -103,12 +103,12 @@ def test_REQ_CODE_is_an_immutable_value_with_repeats() -> None:
 
 
 @pytest.mark.parametrize("bad", [(-1, 0), (0, -1), (3, 2), (5, 0), (3, 1), (1.0, 0), ("1", 0)])
-def test_REQ_CODE_feedback_values_are_possible_counts(bad: tuple[object, object]) -> None:
+def test_req_code_feedback_values_are_possible_counts(bad: tuple[object, object]) -> None:
     with pytest.raises(ValueError):
         Feedback(*bad)  # type: ignore[arg-type]
 
 
-def test_REQ_ROUND_a_correct_guess_wins_and_the_event_hides_the_secret() -> None:
+def test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret() -> None:
     game = Round("r1", Code.parse("0012"))
     assert (state_of(game), game.turns_used, game.turns_left) == (RoundState.ACTIVE, 0, MAX_GUESSES)
     first = game.guess(Code.parse("0203"))
@@ -119,7 +119,7 @@ def test_REQ_ROUND_a_correct_guess_wins_and_the_event_hides_the_secret() -> None
     assert not any("secret" in name for name in GuessScored.__dataclass_fields__)
 
 
-def test_REQ_ROUND_a_correct_eighth_guess_wins() -> None:
+def test_req_round_a_correct_eighth_guess_wins() -> None:
     game = Round("r2", Code.parse("5432"))
     for _ in range(MAX_GUESSES - 1):
         assert game.guess(Code.parse("0000")).state is RoundState.ACTIVE
@@ -128,7 +128,7 @@ def test_REQ_ROUND_a_correct_eighth_guess_wins() -> None:
     assert state_of(game) is RoundState.WON and game.turns_left == 0
 
 
-def test_REQ_ROUND_an_incorrect_eighth_guess_exhausts() -> None:
+def test_req_round_an_incorrect_eighth_guess_exhausts() -> None:
     game = Round("r3", Code.parse("5432"))
     events = [game.guess(Code.parse("0000")) for _ in range(MAX_GUESSES)]
     assert [event.turn for event in events] == list(range(1, 9))
@@ -137,7 +137,7 @@ def test_REQ_ROUND_an_incorrect_eighth_guess_exhausts() -> None:
 
 
 @pytest.mark.parametrize("ending", [RoundState.WON, RoundState.EXHAUSTED])
-def test_REQ_ROUND_terminal_rounds_reject_and_do_not_change(ending: RoundState) -> None:
+def test_req_round_terminal_rounds_reject_and_do_not_change(ending: RoundState) -> None:
     game = Round("r4", Code.parse("1111"))
     if ending is RoundState.WON:
         game.guess(Code.parse("1111"))
@@ -146,13 +146,13 @@ def test_REQ_ROUND_terminal_rounds_reject_and_do_not_change(ending: RoundState) 
             game.guess(Code.parse("2222"))
     assert state_of(game) is ending
     before = copy.deepcopy(game)
-    with pytest.raises(RoundFinished):
+    with pytest.raises(RoundFinishedError):
         game.guess(Code.parse("1111"))
     assert game == before
 
 
 @pytest.mark.parametrize("bad", ["0012", (0, 0, 1, 2), None, 12])
-def test_REQ_ROUND_invalid_input_consumes_no_turn(bad: object) -> None:
+def test_req_round_invalid_input_consumes_no_turn(bad: object) -> None:
     game = Round("r5", Code.parse("0012"))
     game.guess(Code.parse("5555"))
     before = copy.deepcopy(game)
@@ -161,7 +161,7 @@ def test_REQ_ROUND_invalid_input_consumes_no_turn(bad: object) -> None:
     assert game == before and game.turns_used == 1
 
 
-def test_REQ_ROUND_identity_and_secret_are_required() -> None:
+def test_req_round_identity_and_secret_are_required() -> None:
     with pytest.raises(ValueError):
         Round("", Code.parse("0000"))
     with pytest.raises(TypeError):
@@ -170,7 +170,7 @@ def test_REQ_ROUND_identity_and_secret_are_required() -> None:
     assert game.guess(Code.parse("1111")).round_id == "r6"
 
 
-def test_REQ_ROUND_same_guesses_give_the_same_history() -> None:
+def test_req_round_same_guesses_give_the_same_history() -> None:
     guesses = [Code.parse(text) for text in ("0011", "2233", "4455", "0123")]
     histories = []
     for _ in range(2):

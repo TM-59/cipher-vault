@@ -24,13 +24,13 @@ stateDiagram-v2
     Active --> Active: guess, not four exact, fewer than 8 guesses
     Active --> Won: guess scores four exact (any turn, the 8th included)
     Active --> Exhausted: 8th guess, not four exact
-    Won --> Won: guess → RoundFinished, nothing changes
-    Exhausted --> Exhausted: guess → RoundFinished, nothing changes
+    Won --> Won: guess → RoundFinishedError, nothing changes
+    Exhausted --> Exhausted: guess → RoundFinishedError, nothing changes
 ```
 
 **Code.** `Round.state`, `Round.guess`, `Round.turns_used`, `Round.turns_left` in `src/cipher_vault/domain/model.py`.
 
-**Tests.** `test_REQ_ROUND_a_correct_eighth_guess_wins`, `test_REQ_ROUND_an_incorrect_eighth_guess_exhausts`, `test_REQ_ROUND_terminal_rounds_reject_and_do_not_change` (the round equals a deep copy taken before the rejected guess). Measured: `round-eighth-wins` = 1, `round-eighth-exhausts` = 1, `round-terminal-refuses` = 1, `round-terminal-history` = 8.
+**Tests.** `test_req_round_a_correct_eighth_guess_wins`, `test_req_round_an_incorrect_eighth_guess_exhausts`, `test_req_round_terminal_rounds_reject_and_do_not_change` (the round equals a deep copy taken before the rejected guess). Measured: `round-eighth-wins` = 1, `round-eighth-exhausts` = 1, `round-terminal-refuses` = 1, `round-terminal-history` = 8.
 
 ## S07 — One guess: validate, score, record
 
@@ -49,7 +49,7 @@ sequenceDiagram
     participant S as Scoring
     P->>R: guess(code)
     alt round is won or exhausted
-        R-->>P: RoundFinished (nothing changed)
+        R-->>P: RoundFinishedError (nothing changed)
     else code is not a Code
         R-->>P: TypeError (no turn consumed)
     else
@@ -62,7 +62,7 @@ sequenceDiagram
 
 **Code.** `Round.guess` and the dataclass `GuessScored` in `src/cipher_vault/domain/model.py`.
 
-**Tests.** `test_REQ_ROUND_invalid_input_consumes_no_turn` (four kinds of non-code), `test_REQ_ROUND_a_correct_guess_wins_and_the_event_hides_the_secret`, `test_REQ_ROUND_identity_and_secret_are_required`. Measured: `round-invalid-free` = 0 turns used after a guess that is not a Code; `event-fields` = 5 and `event-secret-fields` = 0.
+**Tests.** `test_req_round_invalid_input_consumes_no_turn` (four kinds of non-code), `test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret`, `test_req_round_identity_and_secret_are_required`. Measured: `round-invalid-free` = 0 turns used after a guess that is not a Code; `event-fields` = 5 and `event-secret-fields` = 0.
 
 ## S08 — The rules do not know about the web
 
@@ -89,7 +89,7 @@ flowchart TD
 
 **Code.** The two Import Linter contracts in `pyproject.toml` (`Adapters point inward and remain independent`, and the forbidden-modules contract for the core); the package `src/cipher_vault/domain/__init__.py` exports the nine names of S01.
 
-**Tests.** `make check` runs Import Linter (2 contracts kept); `test_REQ_CORE_imports_without_site_packages` in `tests/test_scaffold.py` starts Python with site packages disabled and imports the domain and application use cases.
+**Tests.** `make check` runs Import Linter (2 contracts kept); `test_req_core_imports_without_site_packages` in `tests/test_scaffold.py` starts Python with site packages disabled and imports the domain and application use cases.
 
 ## References
 

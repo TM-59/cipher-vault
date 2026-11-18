@@ -16,11 +16,11 @@ if TYPE_CHECKING:
     from cipher_vault.application.ports import RoundRepository
 
 
-class RoundNotFound(LookupError):
+class RoundNotFoundError(LookupError):
     """No round exists with the requested identity."""
 
 
-class RoundConflict(RuntimeError):
+class RoundConflictError(RuntimeError):
     """The round changed after it was read."""
 
 
@@ -81,7 +81,7 @@ class ReadRound:
     def execute(self, round_id: str) -> RoundView:
         record = self._repository.get(round_id)
         if record is None:
-            raise RoundNotFound(round_id)
+            raise RoundNotFoundError(round_id)
         return _view(record.round)
 
 
@@ -92,8 +92,8 @@ class GuessRound:
     def execute(self, round_id: str, guess: Code) -> GuessScored:
         record = self._repository.get(round_id)
         if record is None:
-            raise RoundNotFound(round_id)
+            raise RoundNotFoundError(round_id)
         event = record.round.guess(guess)
         if not self._repository.save(record.round, event, record.revision):
-            raise RoundConflict(round_id)
+            raise RoundConflictError(round_id)
         return event

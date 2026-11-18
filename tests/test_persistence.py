@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cipher_vault.application.use_cases import RoundNotFound
+from cipher_vault.application.use_cases import RoundNotFoundError
 from cipher_vault.composition import build_round_use_cases
 from cipher_vault.domain import Code, Round, RoundState
 from cipher_vault.infrastructure.repository import SQLiteRoundRepository
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.integration
 
 
-def test_REQ_PERSISTENCE_round_and_guess_history_survive_reopen(tmp_path: Path) -> None:
+def test_req_persistence_round_and_guess_history_survive_reopen(tmp_path: Path) -> None:
     database = tmp_path / "rounds.sqlite3"
     first = build_round_use_cases(database, lambda: "round-1", lambda: Code.parse("0012"))
     started = first.start.execute()
@@ -37,7 +37,7 @@ def test_REQ_PERSISTENCE_round_and_guess_history_survive_reopen(tmp_path: Path) 
     assert terminal.history == (first_event, won)
 
 
-def test_REQ_ATOMIC_failed_guess_event_rolls_back_round_and_revision(tmp_path: Path) -> None:
+def test_req_atomic_failed_guess_event_rolls_back_round_and_revision(tmp_path: Path) -> None:
     database = tmp_path / "rounds.sqlite3"
     use_cases = build_round_use_cases(database, lambda: "round-1", lambda: Code.parse("0012"))
     started = use_cases.start.execute()
@@ -60,7 +60,7 @@ def test_REQ_ATOMIC_failed_guess_event_rolls_back_round_and_revision(tmp_path: P
     assert record.secret is None
 
 
-def test_REQ_REVISION_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> None:
+def test_req_revision_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> None:
     repository = SQLiteRoundRepository(tmp_path / "rounds.sqlite3")
     repository.add(Round("round-stale", Code.parse("0012")))
     first = repository.get("round-stale")
@@ -78,10 +78,10 @@ def test_REQ_REVISION_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> No
     assert stored.events == (first_event,)
 
 
-def test_REQ_PERSISTENCE_missing_round_is_not_a_success_shaped_result(
+def test_req_persistence_missing_round_is_not_a_success_shaped_result(
     tmp_path: Path,
 ) -> None:
     use_cases = build_round_use_cases(tmp_path / "rounds.sqlite3")
 
-    with pytest.raises(RoundNotFound):
+    with pytest.raises(RoundNotFoundError):
         use_cases.read.execute("missing")

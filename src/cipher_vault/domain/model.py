@@ -20,7 +20,7 @@ class RoundState(Enum):
     EXHAUSTED = "exhausted"
 
 
-class RoundFinished(Exception):
+class RoundFinishedError(Exception):
     """A won or exhausted round accepts no further guess."""
 
 
@@ -131,7 +131,7 @@ class Round:
     def guess(self, code: Code) -> GuessScored:
         """Score one guess. Nothing changes when the round is over or the guess is not a code."""
         if self.state is not RoundState.ACTIVE:
-            raise RoundFinished(f"the round is {self.state.value}")
+            raise RoundFinishedError(f"the round is {self.state.value}")
         if not isinstance(code, Code):
             raise TypeError("a guess is a code")
         feedback = Scoring.score(self.secret, code)

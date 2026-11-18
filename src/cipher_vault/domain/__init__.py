@@ -7,7 +7,7 @@ from cipher_vault.domain.model import (
     Feedback,
     GuessScored,
     Round,
-    RoundFinished,
+    RoundFinishedError,
     RoundState,
     Scoring,
 )
@@ -19,7 +19,7 @@ __all__ = [
     "Feedback",
     "GuessScored",
     "Round",
-    "RoundFinished",
+    "RoundFinishedError",
     "RoundState",
     "Scoring",
 ]

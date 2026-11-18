@@ -19,7 +19,7 @@ from cipher_vault.domain import (  # noqa: E402
     Code,
     Feedback,
     Round,
-    RoundFinished,
+    RoundFinishedError,
     RoundState,
     Scoring,
 )
@@ -316,9 +316,11 @@ def main() -> None:
     try:
         lost.guess(Code.parse("5432"))
         refused = 0
-    except RoundFinished:
+    except RoundFinishedError:
         refused = 1
-    value("round-terminal-refuses", "a ninth guess raises RoundFinished (theory 1)", refused, 1)
+    value(
+        "round-terminal-refuses", "a ninth guess raises RoundFinishedError (theory 1)", refused, 1
+    )
     value(
         "round-terminal-history",
         "guesses recorded after that refusal (theory 8: nothing was added)",
