@@ -47,4 +47,4 @@ What the measurements made visible: the obvious strategy — guess the first cod
 
 Reviewed for this handbook: all of `src/cipher_vault/domain/model.py` (the nine names exported by `src/cipher_vault/domain/__init__.py`), the two Import Linter contracts in `pyproject.toml`, and `tests/test_domain.py`. The application, infrastructure and presentation packages hold no rules yet (M3, M4).
 
-The program is unchanged by this handbook: it adds `scripts/theory_figs.py`, `scripts/theory_check.py`, two Makefile targets, one Ruff per-file setting and these pages.
+The program is unchanged by this handbook: it adds `scripts/theory_figs.py`, `scripts/theory_check.py`, two Makefile targets and these pages.
