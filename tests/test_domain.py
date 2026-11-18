@@ -58,11 +58,13 @@ def state_of(game: Round) -> RoundState:
 def test_req_score_exact_first_then_the_rest_without_reuse(
     secret: str, guess: str, exact: int, partial: int
 ) -> None:
+    """REQ-SCORE: the hand-written table of exact and digit-only matches holds."""
     feedback = Scoring.score(Code.parse(secret), Code.parse(guess))
     assert (feedback.exact, feedback.partial) == (exact, partial)
 
 
 def test_req_score_every_pair_agrees_with_an_independent_count() -> None:
+    """REQ-SCORE: scoring agrees with an independent count over sampled pairs."""
     codes = [Code((a, b, c, d)) for a, b, c, d in product(range(6), repeat=4)]
     assert len(codes) == len(DIGITS) ** CODE_LENGTH
     for secret in codes[::37]:  # 36 secrets against all 1296 guesses
@@ -76,6 +78,7 @@ def test_req_score_every_pair_agrees_with_an_independent_count() -> None:
 
 
 def test_req_score_only_codes_are_compared() -> None:
+    """REQ-SCORE: scoring refuses values that are not codes."""
     with pytest.raises(TypeError):
         Scoring.score(Code.parse("0000"), cast("Code", "0000"))
 
@@ -94,6 +97,7 @@ def test_req_score_only_codes_are_compared() -> None:
     ],
 )
 def test_req_code_four_digits_from_zero_to_five(bad: object) -> None:
+    """REQ-CODE: a code is four whole digits from 0 to 5."""
     with pytest.raises(ValueError, match=f"{WRONG_LENGTH}|{DIGIT_RANGE}"):
         Code(cast("tuple[int, int, int, int]", bad))
 
@@ -115,11 +119,13 @@ def test_req_code_four_digits_from_zero_to_five(bad: object) -> None:
     ],
 )
 def test_req_code_text_must_be_four_plain_digits(bad: object) -> None:
+    """REQ-CODE: code text must be four plain ASCII digits."""
     with pytest.raises(ValueError, match=f"{CODE_TEXT}|{DIGIT_RANGE}"):
         Code.parse(cast("str", bad))
 
 
 def test_req_code_is_an_immutable_value_with_repeats() -> None:
+    """REQ-CODE: codes are frozen values and may repeat digits."""
     code = Code.parse("0055")
     assert code.digits == (0, 0, 5, 5)
     assert str(code) == "0055"
@@ -132,11 +138,13 @@ def test_req_code_is_an_immutable_value_with_repeats() -> None:
 
 @pytest.mark.parametrize("bad", [(-1, 0), (0, -1), (3, 2), (5, 0), (3, 1), (1.0, 0), ("1", 0)])
 def test_req_code_feedback_values_are_possible_counts(bad: tuple[object, object]) -> None:
+    """REQ-CODE: feedback counts must be possible."""
     with pytest.raises(ValueError, match=f"{MATCH_COUNTS}|{TOO_MANY_MATCHES}|{THREE_EXACT}"):
         Feedback(*cast("tuple[int, int]", bad))
 
 
 def test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret() -> None:
+    """REQ-ROUND: a correct guess wins and the event does not carry the secret."""
     game = Round("r1", Code.parse("0012"))
     assert (state_of(game), game.turns_used, game.turns_left) == (RoundState.ACTIVE, 0, MAX_GUESSES)
     first = game.guess(Code.parse("0203"))
@@ -149,6 +157,7 @@ def test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret() -> None
 
 
 def test_req_round_a_correct_eighth_guess_wins() -> None:
+    """REQ-ROUND: a correct eighth guess still wins."""
     game = Round("r2", Code.parse("5432"))
     for _ in range(MAX_GUESSES - 1):
         assert game.guess(Code.parse("0000")).state is RoundState.ACTIVE
@@ -159,6 +168,7 @@ def test_req_round_a_correct_eighth_guess_wins() -> None:
 
 
 def test_req_round_an_incorrect_eighth_guess_exhausts() -> None:
+    """REQ-ROUND: a wrong eighth guess exhausts the round."""
     game = Round("r3", Code.parse("5432"))
     events = [game.guess(Code.parse("0000")) for _ in range(MAX_GUESSES)]
     assert [event.turn for event in events] == list(range(1, 9))
@@ -169,6 +179,7 @@ def test_req_round_an_incorrect_eighth_guess_exhausts() -> None:
 
 @pytest.mark.parametrize("ending", [RoundState.WON, RoundState.EXHAUSTED])
 def test_req_round_terminal_rounds_reject_and_do_not_change(ending: RoundState) -> None:
+    """REQ-ROUND: finished rounds refuse guesses and stay unchanged."""
     game = Round("r4", Code.parse("1111"))
     if ending is RoundState.WON:
         game.guess(Code.parse("1111"))
@@ -184,6 +195,7 @@ def test_req_round_terminal_rounds_reject_and_do_not_change(ending: RoundState) 
 
 @pytest.mark.parametrize("bad", ["0012", (0, 0, 1, 2), None, 12])
 def test_req_round_invalid_input_consumes_no_turn(bad: object) -> None:
+    """REQ-ROUND: a guess that is not a code uses no turn."""
     game = Round("r5", Code.parse("0012"))
     game.guess(Code.parse("5555"))
     before = copy.deepcopy(game)
@@ -194,6 +206,7 @@ def test_req_round_invalid_input_consumes_no_turn(bad: object) -> None:
 
 
 def test_req_round_identity_and_secret_are_required() -> None:
+    """REQ-ROUND: identity and a hidden code are required."""
     with pytest.raises(ValueError, match=ROUND_WITHOUT_IDENTITY):
         Round("", Code.parse("0000"))
     with pytest.raises(TypeError):
@@ -203,6 +216,7 @@ def test_req_round_identity_and_secret_are_required() -> None:
 
 
 def test_req_round_same_guesses_give_the_same_history() -> None:
+    """REQ-ROUND: the same guesses always give the same history."""
     guesses = [Code.parse(text) for text in ("0011", "2233", "4455", "0123")]
     histories = []
     for _ in range(2):

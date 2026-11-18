@@ -30,6 +30,8 @@ ROUND_FINISHED = "the round is {}"
 
 
 class RoundState(Enum):
+    """Whether a round is still open, won, or out of guesses."""
+
     ACTIVE = "active"
     WON = "won"
     EXHAUSTED = "exhausted"
@@ -46,6 +48,7 @@ class Code:
     digits: tuple[int, int, int, int]
 
     def __post_init__(self) -> None:
+        """Refuse anything but four whole digits from 0 to 5."""
         if not isinstance(self.digits, tuple) or len(self.digits) != CODE_LENGTH:
             raise ValueError(WRONG_LENGTH)
         if any(type(digit) is not int or digit not in DIGITS for digit in self.digits):
@@ -62,6 +65,7 @@ class Code:
         return Code((a, b, c, d))
 
     def __str__(self) -> str:
+        """Write the code as four digits."""
         return "".join(str(digit) for digit in self.digits)
 
 
@@ -73,6 +77,7 @@ class Feedback:
     partial: int
 
     def __post_init__(self) -> None:
+        """Refuse counts that no pair of codes can produce."""
         for count in (self.exact, self.partial):
             if type(count) is not int or count < 0:
                 raise ValueError(MATCH_COUNTS)
@@ -83,6 +88,7 @@ class Feedback:
 
     @property
     def solved(self) -> bool:
+        """Whether every position matched."""
         return self.exact == CODE_LENGTH
 
 
@@ -91,6 +97,7 @@ class Scoring:
 
     @staticmethod
     def score(secret: Code, guess: Code) -> Feedback:
+        """Count exact matches first, then digits that match elsewhere without reuse."""
         if not isinstance(secret, Code) or not isinstance(guess, Code):
             raise TypeError(SCORE_NEEDS_CODES)
         exact = sum(s == g for s, g in zip(secret.digits, guess.digits, strict=True))
@@ -120,6 +127,7 @@ class Round:
     history: tuple[GuessScored, ...] = field(default=())
 
     def __post_init__(self) -> None:
+        """Refuse a round without identity, a hidden code, or with too many guesses."""
         if not self.round_id:
             raise ValueError(ROUND_WITHOUT_IDENTITY)
         if not isinstance(self.secret, Code):
@@ -129,14 +137,17 @@ class Round:
 
     @property
     def turns_used(self) -> int:
+        """Guesses made so far."""
         return len(self.history)
 
     @property
     def turns_left(self) -> int:
+        """Guesses still allowed."""
         return MAX_GUESSES - len(self.history)
 
     @property
     def state(self) -> RoundState:
+        """Won when a guess was solved, exhausted after eight guesses, otherwise active."""
         if self.history and self.history[-1].feedback.solved:
             return RoundState.WON  # a correct eighth guess wins
         if len(self.history) >= MAX_GUESSES:

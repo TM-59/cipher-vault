@@ -1,3 +1,5 @@
+"""SQLite adapter for the application round repository port."""
+
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -35,7 +37,10 @@ STORED_EVENT_MISMATCH = "stored guess event does not match the round rules"
 
 
 class SQLiteRoundRepository:
+    """Round repository on a file-backed SQLite database, with revisions."""
+
     def __init__(self, path: str | Path) -> None:
+        """Open (and create if needed) the database at `path`."""
         self._path = str(path)
         if self._path == ":memory:":
             raise ValueError(FILE_DATABASE_REQUIRED)
@@ -44,6 +49,7 @@ class SQLiteRoundRepository:
             connection.executescript(_SCHEMA)
 
     def add(self, round_: Round) -> None:
+        """Insert the round at revision 0."""
         with self._connection() as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             connection.execute(
@@ -52,6 +58,7 @@ class SQLiteRoundRepository:
             )
 
     def get(self, round_id: str) -> RoundRecord | None:
+        """Return the stored round, its events and revision, or None."""
         with self._connection() as connection, connection:
             connection.execute("BEGIN")
             row = connection.execute(
@@ -78,6 +85,7 @@ class SQLiteRoundRepository:
             return RoundRecord(round_, events, revision)
 
     def save(self, round_: Round, event: GuessScored, expected_revision: int) -> bool:
+        """Append the event and bump the revision atomically if it is unchanged."""
         if (
             event.round_id != round_.round_id
             or not round_.history

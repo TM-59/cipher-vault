@@ -111,6 +111,7 @@ for step in steps:
 
 
 def read_counts(junit: Path) -> dict[str, int]:
+    """Return the test, failure, error and skip counts of one JUnit report."""
     counts = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
     if junit.exists():
         for case in ElementTree.parse(junit).iter("testcase"):

@@ -1,3 +1,5 @@
+"""The SQLite repository: persistence, atomic saves and revisions."""
+
 import sqlite3
 from typing import TYPE_CHECKING
 
@@ -15,6 +17,7 @@ pytestmark = pytest.mark.integration
 
 
 def test_req_persistence_round_and_guess_history_survive_reopen(tmp_path: Path) -> None:
+    """REQ-PERSISTENCE: the round and its guesses survive reopening the database."""
     database = tmp_path / "rounds.sqlite3"
     first = build_round_use_cases(database, lambda: "round-1", lambda: Code.parse("0012"))
     started = first.start.execute()
@@ -38,6 +41,7 @@ def test_req_persistence_round_and_guess_history_survive_reopen(tmp_path: Path) 
 
 
 def test_req_atomic_failed_guess_event_rolls_back_round_and_revision(tmp_path: Path) -> None:
+    """REQ-ATOMIC: a failed event insert rolls back the round and revision."""
     database = tmp_path / "rounds.sqlite3"
     use_cases = build_round_use_cases(database, lambda: "round-1", lambda: Code.parse("0012"))
     started = use_cases.start.execute()
@@ -62,6 +66,7 @@ def test_req_atomic_failed_guess_event_rolls_back_round_and_revision(tmp_path: P
 
 
 def test_req_revision_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> None:
+    """REQ-REVISION: a stale snapshot cannot append a guess."""
     repository = SQLiteRoundRepository(tmp_path / "rounds.sqlite3")
     repository.add(Round("round-stale", Code.parse("0012")))
     first = repository.get("round-stale")
@@ -83,6 +88,7 @@ def test_req_revision_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> No
 def test_req_persistence_missing_round_is_not_a_success_shaped_result(
     tmp_path: Path,
 ) -> None:
+    """REQ-PERSISTENCE: a missing round is None, not an empty record."""
     use_cases = build_round_use_cases(tmp_path / "rounds.sqlite3")
 
     with pytest.raises(RoundNotFoundError):

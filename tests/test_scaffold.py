@@ -1,3 +1,5 @@
+"""The HTTP scaffold and the framework-free core."""
+
 import subprocess
 import sys
 from http import HTTPStatus
@@ -8,6 +10,7 @@ from cipher_vault.composition import create_app
 
 
 def test_req_health_returns_typed_response() -> None:
+    """REQ-HEALTH: GET /health answers a typed status ok."""
     with TestClient(create_app()) as client:
         response = client.get("/health")
         assert response.status_code == HTTPStatus.OK
@@ -15,6 +18,7 @@ def test_req_health_returns_typed_response() -> None:
 
 
 def test_req_core_imports_without_site_packages() -> None:
+    """REQ-CORE: domain and application import without site packages."""
     subprocess.run(
         [
             sys.executable,

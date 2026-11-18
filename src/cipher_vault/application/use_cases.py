@@ -1,3 +1,5 @@
+"""Framework-independent round use cases; the secret is shown only when a round ends."""
+
 import secrets
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -26,6 +28,8 @@ class RoundConflictError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class RoundView:
+    """What a player may see of a round: the secret only once the round is over."""
+
     round_id: str
     state: RoundState
     history: tuple[GuessScored, ...]
@@ -58,27 +62,35 @@ def _new_code() -> Code:
 
 
 class StartRound:
+    """Create a round with a new identity and a hidden code, and store it."""
+
     def __init__(
         self,
         repository: RoundRepository,
         id_factory: Callable[[], str] | None = None,
         code_factory: Callable[[], Code] | None = None,
     ) -> None:
+        """Use `repository`, and optional factories for identities and hidden codes."""
         self._repository = repository
         self._id_factory = id_factory if id_factory is not None else (lambda: str(uuid4()))
         self._code_factory = code_factory if code_factory is not None else _new_code
 
     def execute(self) -> RoundView:
+        """Start a round and return its view."""
         round_ = Round(self._id_factory(), self._code_factory())
         self._repository.add(round_)
         return _view(round_)
 
 
 class ReadRound:
+    """Read the view of a stored round."""
+
     def __init__(self, repository: RoundRepository) -> None:
+        """Use `repository` to read rounds."""
         self._repository = repository
 
     def execute(self, round_id: str) -> RoundView:
+        """Return the view of round `round_id`."""
         record = self._repository.get(round_id)
         if record is None:
             raise RoundNotFoundError(round_id)
@@ -86,10 +98,14 @@ class ReadRound:
 
 
 class GuessRound:
+    """Score a guess in a stored round."""
+
     def __init__(self, repository: RoundRepository) -> None:
+        """Use `repository` to read and save rounds."""
         self._repository = repository
 
     def execute(self, round_id: str, guess: Code) -> GuessScored:
+        """Score `guess`, save, and return the event."""
         record = self._repository.get(round_id)
         if record is None:
             raise RoundNotFoundError(round_id)

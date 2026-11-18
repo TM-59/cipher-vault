@@ -1,3 +1,5 @@
+"""Use cases against an in-memory repository port."""
+
 from copy import deepcopy
 from typing import cast
 
@@ -16,20 +18,26 @@ from cipher_vault.domain import MAX_GUESSES, Code, GuessScored, Round, RoundStat
 
 
 class MemoryRoundRepository:
+    """In-memory RoundRepository with revisions and an injectable rejected save."""
+
     def __init__(self) -> None:
+        """Start empty, accepting saves."""
         self.records: dict[str, RoundRecord] = {}
         self.reject_save = False
 
     def add(self, round_: Round) -> None:
+        """Store a copy of the round at revision 0."""
         self.records[round_.round_id] = RoundRecord(deepcopy(round_), (), 0)
 
     def get(self, round_id: str) -> RoundRecord | None:
+        """Return a copy of the stored record."""
         record = self.records.get(round_id)
         if record is None:
             return None
         return RoundRecord(deepcopy(record.round), record.events, record.revision)
 
     def save(self, round_: Round, event: GuessScored, expected_revision: int) -> bool:
+        """Save when the revision matches and saves are not rejected."""
         record = self.records[round_.round_id]
         if self.reject_save or record.revision != expected_revision:
             return False
@@ -40,6 +48,7 @@ class MemoryRoundRepository:
 
 
 def test_req_usecase_start_guess_and_read_hide_the_secret_until_terminal() -> None:
+    """REQ-USECASE: start, guess and read keep the secret hidden until the round ends."""
     repository: RoundRepository = MemoryRoundRepository()
     start = StartRound(repository, lambda: "round-1", lambda: Code.parse("0012"))
     started = start.execute()
@@ -62,6 +71,7 @@ def test_req_usecase_start_guess_and_read_hide_the_secret_until_terminal() -> No
 
 
 def test_req_usecase_unknown_round_and_invalid_guess_do_not_persist() -> None:
+    """REQ-USECASE: unknown rounds and invalid guesses store nothing."""
     repository = MemoryRoundRepository()
     StartRound(repository, lambda: "round-1", lambda: Code.parse("0012")).execute()
     before = ReadRound(repository).execute("round-1")
@@ -78,6 +88,7 @@ def test_req_usecase_unknown_round_and_invalid_guess_do_not_persist() -> None:
 
 
 def test_req_usecase_stale_revision_is_reported_as_a_conflict() -> None:
+    """REQ-USECASE: a rejected save is reported as a conflict."""
     repository = MemoryRoundRepository()
     StartRound(repository, lambda: "round-1", lambda: Code.parse("0012")).execute()
     repository.reject_save = True
