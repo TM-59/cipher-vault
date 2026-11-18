@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import cast
 
 import pytest
 
@@ -11,7 +12,7 @@ from cipher_vault.application.use_cases import (
     RoundView,
     StartRound,
 )
-from cipher_vault.domain import Code, GuessScored, Round, RoundState
+from cipher_vault.domain import MAX_GUESSES, Code, GuessScored, Round, RoundState
 
 
 class MemoryRoundRepository:
@@ -43,13 +44,15 @@ def test_req_usecase_start_guess_and_read_hide_the_secret_until_terminal() -> No
     start = StartRound(repository, lambda: "round-1", lambda: Code.parse("0012"))
     started = start.execute()
     assert isinstance(started, RoundView)
-    assert started.secret is None and started.turns_left == 8
+    assert started.secret is None
+    assert started.turns_left == MAX_GUESSES
 
     guess = GuessRound(repository)
     first = guess.execute("round-1", Code.parse("0203"))
     active = ReadRound(repository).execute("round-1")
     assert first.round_id == "round-1"
-    assert active.secret is None and active.history == (first,)
+    assert active.secret is None
+    assert active.history == (first,)
 
     won = guess.execute("round-1", Code.parse("0012"))
     terminal = ReadRound(repository).execute("round-1")
@@ -69,7 +72,7 @@ def test_req_usecase_unknown_round_and_invalid_guess_do_not_persist() -> None:
     with pytest.raises(RoundNotFoundError):
         guess.execute("missing", Code.parse("0000"))
     with pytest.raises(TypeError):
-        guess.execute("round-1", "0012")  # type: ignore[arg-type]
+        guess.execute("round-1", cast("Code", "0012"))
 
     assert ReadRound(repository).execute("round-1") == before
 
@@ -84,4 +87,5 @@ def test_req_usecase_stale_revision_is_reported_as_a_conflict() -> None:
 
     record = repository.get("round-1")
     assert record is not None
-    assert record.revision == 0 and record.events == ()
+    assert record.revision == 0
+    assert record.events == ()

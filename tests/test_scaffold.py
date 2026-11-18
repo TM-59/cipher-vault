@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
@@ -9,7 +10,7 @@ from cipher_vault.composition import create_app
 def test_req_health_returns_typed_response() -> None:
     with TestClient(create_app()) as client:
         response = client.get("/health")
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
         assert response.json() == {"status": "ok"}
 
 

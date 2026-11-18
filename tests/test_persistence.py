@@ -56,7 +56,8 @@ def test_req_atomic_failed_guess_event_rolls_back_round_and_revision(tmp_path: P
 
     record = build_round_use_cases(database).read.execute(started.round_id)
     assert record.state is RoundState.ACTIVE
-    assert record.turns_used == 0 and record.history == ()
+    assert record.turns_used == 0
+    assert record.history == ()
     assert record.secret is None
 
 
@@ -65,7 +66,8 @@ def test_req_revision_stale_snapshot_cannot_append_a_guess(tmp_path: Path) -> No
     repository.add(Round("round-stale", Code.parse("0012")))
     first = repository.get("round-stale")
     stale = repository.get("round-stale")
-    assert first is not None and stale is not None
+    assert first is not None
+    assert stale is not None
 
     first_event = first.round.guess(Code.parse("0203"))
     assert repository.save(first.round, first_event, first.revision)

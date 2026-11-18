@@ -2,6 +2,7 @@
 
 import copy
 from itertools import product
+from typing import cast
 
 import pytest
 
@@ -14,6 +15,17 @@ from cipher_vault.domain import (
     RoundFinishedError,
     RoundState,
     Scoring,
+)
+from cipher_vault.domain.model import (
+    CODE_LENGTH,
+    CODE_TEXT,
+    DIGIT_RANGE,
+    DIGITS,
+    MATCH_COUNTS,
+    ROUND_WITHOUT_IDENTITY,
+    THREE_EXACT,
+    TOO_MANY_MATCHES,
+    WRONG_LENGTH,
 )
 
 # secret, guess, exact, digit-only. Written by hand, not derived from the code.
@@ -52,7 +64,7 @@ def test_req_score_exact_first_then_the_rest_without_reuse(
 
 def test_req_score_every_pair_agrees_with_an_independent_count() -> None:
     codes = [Code((a, b, c, d)) for a, b, c, d in product(range(6), repeat=4)]
-    assert len(codes) == 1296
+    assert len(codes) == len(DIGITS) ** CODE_LENGTH
     for secret in codes[::37]:  # 36 secrets against all 1296 guesses
         for guess in codes:
             feedback = Scoring.score(secret, guess)
@@ -65,7 +77,7 @@ def test_req_score_every_pair_agrees_with_an_independent_count() -> None:
 
 def test_req_score_only_codes_are_compared() -> None:
     with pytest.raises(TypeError):
-        Scoring.score(Code.parse("0000"), "0000")  # type: ignore[arg-type]
+        Scoring.score(Code.parse("0000"), cast("Code", "0000"))
 
 
 @pytest.mark.parametrize(
@@ -82,30 +94,46 @@ def test_req_score_only_codes_are_compared() -> None:
     ],
 )
 def test_req_code_four_digits_from_zero_to_five(bad: object) -> None:
-    with pytest.raises(ValueError):
-        Code(bad)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match=f"{WRONG_LENGTH}|{DIGIT_RANGE}"):
+        Code(cast("tuple[int, int, int, int]", bad))
 
 
 @pytest.mark.parametrize(
-    "bad", ["", "012", "01234", "0126", "01a2", "0 12", "-012", "０１２３", "0.12", None, 12]
+    "bad",
+    [
+        "",
+        "012",
+        "01234",
+        "0126",
+        "01a2",
+        "0 12",
+        "-012",
+        "".join(chr(ord("\N{FULLWIDTH DIGIT ZERO}") + n) for n in range(4)),  # full-width 0123
+        "0.12",
+        None,
+        12,
+    ],
 )
 def test_req_code_text_must_be_four_plain_digits(bad: object) -> None:
-    with pytest.raises(ValueError):
-        Code.parse(bad)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match=f"{CODE_TEXT}|{DIGIT_RANGE}"):
+        Code.parse(cast("str", bad))
 
 
 def test_req_code_is_an_immutable_value_with_repeats() -> None:
     code = Code.parse("0055")
-    assert code.digits == (0, 0, 5, 5) and str(code) == "0055"
-    assert code == Code((0, 0, 5, 5)) and hash(code) == hash(Code((0, 0, 5, 5)))
+    assert code.digits == (0, 0, 5, 5)
+    assert str(code) == "0055"
+    assert code == Code((0, 0, 5, 5))
+    assert hash(code) == hash(Code((0, 0, 5, 5)))
+    field = "digits"
     with pytest.raises(AttributeError):
-        code.digits = (1, 1, 1, 1)  # type: ignore[misc]
+        setattr(code, field, (1, 1, 1, 1))  # a frozen value cannot be reassigned
 
 
 @pytest.mark.parametrize("bad", [(-1, 0), (0, -1), (3, 2), (5, 0), (3, 1), (1.0, 0), ("1", 0)])
 def test_req_code_feedback_values_are_possible_counts(bad: tuple[object, object]) -> None:
-    with pytest.raises(ValueError):
-        Feedback(*bad)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match=f"{MATCH_COUNTS}|{TOO_MANY_MATCHES}|{THREE_EXACT}"):
+        Feedback(*cast("tuple[int, int]", bad))
 
 
 def test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret() -> None:
@@ -115,7 +143,8 @@ def test_req_round_a_correct_guess_wins_and_the_event_hides_the_secret() -> None
     assert first == GuessScored("r1", 1, Code.parse("0203"), Feedback(1, 2), RoundState.ACTIVE)
     won = game.guess(Code.parse("0012"))
     assert (won.turn, won.feedback, won.state) == (2, Feedback(4, 0), RoundState.WON)
-    assert state_of(game) is RoundState.WON and game.history == (first, won)
+    assert state_of(game) is RoundState.WON
+    assert game.history == (first, won)
     assert not any("secret" in name for name in GuessScored.__dataclass_fields__)
 
 
@@ -125,14 +154,16 @@ def test_req_round_a_correct_eighth_guess_wins() -> None:
         assert game.guess(Code.parse("0000")).state is RoundState.ACTIVE
     last = game.guess(Code.parse("5432"))
     assert (last.turn, last.state) == (8, RoundState.WON)
-    assert state_of(game) is RoundState.WON and game.turns_left == 0
+    assert state_of(game) is RoundState.WON
+    assert game.turns_left == 0
 
 
 def test_req_round_an_incorrect_eighth_guess_exhausts() -> None:
     game = Round("r3", Code.parse("5432"))
     events = [game.guess(Code.parse("0000")) for _ in range(MAX_GUESSES)]
     assert [event.turn for event in events] == list(range(1, 9))
-    assert events[-2].state is RoundState.ACTIVE and events[-1].state is RoundState.EXHAUSTED
+    assert events[-2].state is RoundState.ACTIVE
+    assert events[-1].state is RoundState.EXHAUSTED
     assert state_of(game) is RoundState.EXHAUSTED
 
 
@@ -157,15 +188,16 @@ def test_req_round_invalid_input_consumes_no_turn(bad: object) -> None:
     game.guess(Code.parse("5555"))
     before = copy.deepcopy(game)
     with pytest.raises(TypeError):
-        game.guess(bad)  # type: ignore[arg-type]
-    assert game == before and game.turns_used == 1
+        game.guess(cast("Code", bad))
+    assert game == before
+    assert game.turns_used == 1
 
 
 def test_req_round_identity_and_secret_are_required() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=ROUND_WITHOUT_IDENTITY):
         Round("", Code.parse("0000"))
     with pytest.raises(TypeError):
-        Round("r", "0000")  # type: ignore[arg-type]
+        Round("r", cast("Code", "0000"))
     game = Round("r6", Code.parse("0000"))
     assert game.guess(Code.parse("1111")).round_id == "r6"
 
@@ -176,4 +208,5 @@ def test_req_round_same_guesses_give_the_same_history() -> None:
     for _ in range(2):
         game = Round("replay", Code.parse("0123"))
         histories.append(tuple(game.guess(code) for code in guesses))
-    assert histories[0] == histories[1] and histories[0][-1].state is RoundState.WON
+    assert histories[0] == histories[1]
+    assert histories[0][-1].state is RoundState.WON
