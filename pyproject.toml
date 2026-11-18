@@ -10,7 +10,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pytest", "httpx2", "ruff", "mypy", "import-linter"]
+dev = [
+    "pytest",
+    "httpx2",
+    "ruff",
+    "mypy",
+    "import-linter",
+    "defusedxml",
+    "types-defusedxml",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
