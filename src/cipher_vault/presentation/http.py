@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """HTTP routes; they translate requests and hold no game rules."""
 
 from typing import Literal

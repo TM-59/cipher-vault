@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """Pure rules of Codebreaking. No web framework is touched here."""
 
 import copy

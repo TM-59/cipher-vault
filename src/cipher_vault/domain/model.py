@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """Codebreaking: the code and feedback values, scoring, and the round aggregate.
 
 Standard library only. The hidden code is game state, not a credential.

@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """Pure code, feedback and round rules: standard library only."""
 
 from cipher_vault.domain.model import (

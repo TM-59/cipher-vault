@@ -1,3 +1,4 @@
+# Copyright 2026 TM-59
 """Composition root: wire the use cases to SQLite and build the FastAPI app."""
 
 import os
